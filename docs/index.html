@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Twitter Bootstrap</title>
+    <title>TrueSpot-Wifi</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -24,9 +24,158 @@
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+        <script src="assets/js/jquery.js"></script>
+<script language="JavaScript">
+
+var colors=new Array;
+
+colors[0]='#ffffff';
+
+colors[1]='#dddddd';
+
+var color=0;
+
+var max_news=17;
+
+var news_arr=new Array;
+
+var buffer=new Array;
+
+var tmp_from_buffer;
+
+var spos=0;
+
+var cpos=0;
+
+var active_div;
+
+var inactive_div;
+
+var d=document;
+
+ajax_load_data(false); // çàãðóçèì áóôåð íà÷àëüíûìè äàííûìè è òóïî ìîìåíòàëüíî ïåðåïèøåì èõ â ðàáî÷èé ìàññèâ
+
+while(tmp=buffer.shift()) news_arr.push(tmp);
+
+function ajax_load_data(mode) {
+
+  if(!mode || mode!='true') mode=false;
+
+  else mode=true;
+
+  $.ajax({
+
+    url: "http://test-wifi.sandbox.2kgroup.com/last_news.php",
+
+    cache: false,
+
+    async: mode,
+
+    success: function(html) {
+
+      buffer=new Array;
+
+      eval(html);
+
+    }
+
+  });
+
+  setTimeout('ajax_load_data(true)', 120000);
+
+}
+
+function roll_ini() {
+
+  if(max_news>news_arr.length) max_news=news_arr.length;
+
+  active_div=0;
+
+  inactive_div=1;
+
+  d.getElementById('roll'+active_div).style.zIndex=1;     // íà÷àëüíàÿ èíèöèàëèçàöèÿ - ýòîò ñëîé ëåæèò âíèçó è íåâèäèì
+
+  d.getElementById('roll'+inactive_div).style.zIndex=100;   // íà÷àëüíàÿ èíèöèàëèçàöèÿ - ýòîò ñëîé ëåæèò ñâåðõó
+
+  roll_one_news();                      // ïîãíàëè àíèìàøêó
+
+}
+
+function roll_one_news() {
+
+  var roll_id='roll'+active_div;        // èäåíòèôèêàòîð àêòèâíîãî ñëîÿ
+
+  var o=d.getElementById(roll_id);      // ïîëó÷èì àêòèâíûé ñëîé, êóäà áóäåì çàïîëíÿòü ñâåæèå äàííûå
+
+  o.style.zIndex=1;             // óëîæèì åãî ïîä òîò ñëîé, êîòîðûé âèäåí þçåðó ñåé÷àñ
+
+  o.style.top=0;                // âåðí¸ì ñëîé â íà÷àëî
+
+  o.innerHTML='';               // îáíóëÿåì àêòèâíûé ñëîé
+
+  cpos=spos;                  // ýòî ñ÷¸ò÷èêè äëÿ ïîñòðîåíèÿ îáðàòíîãî ñïèñêà
+
+  for(var i=0; i<max_news; i++) {
+
+    if(cpos>=news_arr.length) cpos=0;
+
+    ndiv=d.createElement("div");
+
+    ndiv.id='news_row';
+
+    ndiv.style.backgroundColor=colors[color];
+
+    color=1-color;
+
+    ndiv.innerHTML=news_arr[cpos];
+
+    o.appendChild(ndiv);
+
+    cpos--;
+
+    if(cpos<0) cpos=news_arr.length-1;
+
+  }
+
+  spos++;
+
+  if(spos>=news_arr.length) spos=0;     // âñ¸, òóò ìû çàêîí÷èëè âûâîäèòü ñïèñîê ñîáûòèé íà àêòèâíîì ñëîå
+
+  tmp_from_buffer=buffer.shift();       // ïðîâåðèì, åñëè â áóôåðå åñòü íîâûå äàííûå - îáíîâèì àêòèâíûé ìàññèâ (1 ýëåìåíò)
+
+  if(tmp_from_buffer) news_arr[spos]=tmp_from_buffer;
+
+  o.style.display='';             // ïîêàæåì àêòèâíûé ñëîé
+
+  // çàïóñòèì àíèìàöèþ. äëÿ íåàêòèâíîãî ñëîÿ - ñäâèíåì åãî íà 30 ïèêñåëîâ è ñêðîåì
+
+  if(d.getElementById('roll'+inactive_div).style.display=='') // íà ñëó÷àé, åñëè âåðõíèé ñëîé âûêëþ÷åí - íåò ñìûñëà àíèìèðîâàòü åãî
+
+    $('#roll'+inactive_div).animate({top: '30px'},function() { $('#roll'+active_div).css({display:"none"});});
+
+  // õîòü àêòèâíûé ñëîé ó íàñ îäèí òåïåðü âèäèìûé, íå çàáûâàåì ïðî íåàêòèâíûé - âûâåäåì íà ïåðåäíèé ïëàí
+
+  d.getElementById('roll'+active_div).style.zIndex=1;
+
+  d.getElementById('roll'+inactive_div).style.zIndex=100;
+
+  // òåïåðü ïîìåíÿåì ñëîè è ïîäãîòîâèìñÿ ê ñëåäóþùåìó öèêëó
+
+  inactive_div=active_div;
+
+  active_div=1-active_div;
+
+  // ñëåäóþùèé öèêë
+
+  setTimeout('roll_one_news()', 2000);
+
+}
+
+</script>
+
   </head>
 
-  <body data-spy="scroll" data-target=".subnav" data-offset="50">
+  <body onload="roll_ini()" data-spy="scroll" data-target=".subnav" data-offset="50">
 
 
   <!-- Navbar
@@ -39,34 +188,10 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="./index.html">Bootstrap</a>
+          <a class="brand" href="./index.html">TRUESPOT</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active">
-                <a href="./index.html">Overview</a>
-              </li>
-              <li class="">
-                <a href="./scaffolding.html">Scaffolding</a>
-              </li>
-              <li class="">
-                <a href="./base-css.html">Base CSS</a>
-              </li>
-              <li class="">
-                <a href="./components.html">Components</a>
-              </li>
-              <li class="">
-                <a href="./javascript.html">Javascript plugins</a>
-              </li>
-              <li class="">
-                <a href="./less.html">Using LESS</a>
-              </li>
-              <li class="divider-vertical"></li>
-              <li class="">
-                <a href="./download.html">Customize</a>
-              </li>
-              <li class="">
-                <a href="./examples.html">Examples</a>
-              </li>
+              
             </ul>
           </div>
         </div>
@@ -79,31 +204,27 @@
 ================================================== -->
 <header class="jumbotron masthead">
   <div class="inner">
-    <h1>Bootstrap, from Twitter</h1>
-    <p>Simple and flexible HTML, CSS, and Javascript for popular user interface components and interactions.</p>
+    <h1>TrueSpot-Wifi</h1>
+    <p>Gain valuable insight on public wifi network safety based on reputation analysis.</p>
+    <p><img src="assets/img/wifi.png"/ ></p>
     <p class="download-info">
-      <a href="https://github.com/twitter/bootstrap/" class="btn btn-primary btn-large">View project on GitHub</a>
-      <a href="assets/bootstrap.zip" class="btn btn-large">Download Bootstrap <small>(v2.0.3)</small></a>
+      <a href="http://test-wifi.sandbox.2kgroup.com/download/OwlRelease.zip" class="btn btn-success btn-large">Dowload for Windows 7</a>
+      <a href="market://search?q=pname:com.alarmspider.wifiwidget2" class="btn btn-large">Download Android App <small>(v2.0.3)</small></a>
     </p>
   </div>
 
   <div class="bs-links">
     <ul class="quick-links">
-      <li><a href="./upgrading.html">Upgrading from 1.4</a></li>
-      <li><a href="https://github.com/twitter/bootstrap/zipball/master">Download with docs</a></li>
-      <li><a href="http://blog.getbootstrap.com">Read the blog</a></li>
-      <li><a href="https://github.com/twitter/bootstrap/issues?state=open">Submit issues</a></li>
+      <li><a href="./upgrading.html">Map Page</a></li>
+      <li><a href="https://github.com/twitter/bootstrap/zipball/master">Grid Page</a></li>
+      <li><a href="http://blog.getbootstrap.com">Statistic page</a></li>
+      <li><a href="https://github.com/twitter/bootstrap/issues?state=open">Read the blog</a></li>
       <li><a href="https://github.com/twitter/bootstrap/wiki">Roadmap and changelog</a></li>
     </ul>
     <ul class="quick-links">
-      <li>
-        <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=twitter&repo=bootstrap&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="112px" height="20px"></iframe>
-      </li>
-      <li>
-        <iframe class="github-btn" src="http://markdotto.github.com/github-buttons/github-btn.html?user=twitter&repo=bootstrap&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="98px" height="20px"></iframe>
-      </li>
+     
       <li class="follow-btn">
-        <a href="https://twitter.com/twbootstrap" class="twitter-follow-button" data-link-color="#0069D6" data-show-count="true">Follow @twbootstrap</a>
+        <a href="https://twitter.com/twbootstrap" class="twitter-follow-button" data-link-color="#0069D6" data-show-count="true">Follow @TRUESPOT</a>
       </li>
       <li class="tweet-btn">
         <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://twitter.github.com/bootstrap/" data-count="horizontal" data-via="twbootstrap" data-related="mdo:Creator of Twitter Bootstrap">Tweet</a>
@@ -115,108 +236,78 @@
 <hr class="soften">
 
 <div class="marketing">
-  <h1>Designed for everyone, everywhere.</h1>
-  <p class="marketing-byline">Need reasons to love Bootstrap? Look no further.</p>
+  <h1>Wifi hotspot reputation analysis</h1>
+  <p class="marketing-byline">Your data is at risk over wifi</p>
   <div class="row">
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_042_group.png">
-      <h2>Built for and by nerds</h2>
+      <h2>Man in the middle attacks</h2>
       <p>Like you, we love building awesome products on the web. We love it so much, we decided to help people just like us do it easier, better, and faster. Bootstrap is built for you.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_079_podium.png">
-      <h2>For all skill levels</h2>
+      <h2>Another scary thing here</h2>
       <p>Bootstrap is designed to help people of all skill levels&mdash;designer or developer, huge nerd or early beginner. Use it as a complete kit or use to start something more complex.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_163_iphone.png">
-      <h2>Cross-everything</h2>
+      <h2>Another cool feature here</h2>
       <p>Originally built with only modern browsers in mind, Bootstrap has evolved to include support for all major browsers (even IE7!) and, with Bootstrap 2, tablets and smartphones, too.</p>
     </div>
   </div><!--/row-->
   <div class="row">
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_155_show_thumbnails.png">
-      <h2>12-column grid</h2>
+      <h2>Good benefit about this</h2>
       <p>Grid systems aren't everything, but having a durable and flexible one at the core of your work can make development much simpler. Use our built-in grid classes or roll your own.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_214_resize_small.png">
-      <h2>Responsive design</h2>
+      <h2>Another cool feature here</h2>
       <p>With Bootstrap 2, we've gone fully responsive. Our components are scaled according to a range of resolutions and devices to provide a consistent experience, no matter what.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_266_book_open.png">
-      <h2>Styleguide docs</h2>
+      <h2>Clock Speed analysis</h2>
       <p>Unlike other front-end toolkits, Bootstrap was designed first and foremost as a styleguide to document not only our features, but best practices and living, coded examples.</p>
     </div>
   </div><!--/row-->
   <div class="row">
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_082_roundabout.png">
-      <h2>Growing library</h2>
+      <h2>Another cool feature here</h2>
       <p>Despite being only 10kb (gzipped), Bootstrap is one of the most complete front-end toolkits out there with dozens of fully functional components ready to be put to use.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/glyphicons/glyphicons_009_magic.png">
-      <h2>Custom jQuery plugins</h2>
+      <h2>Another cool feature here</h2>
       <p>What good is an awesome design component without easy-to-use, proper, and extensible interactions? With Bootstrap, you get custom-built jQuery plugins to bring your projects to life.</p>
     </div>
     <div class="span4">
       <img class="bs-icon" src="assets/img/less-small.png">
-      <h2>Built on LESS</h2>
+      <h2>Another cool feature here</h2>
       <p>Where vanilla CSS falters, LESS excels. Variables, nesting, operations, and mixins in LESS makes coding CSS faster and more efficient with minimal overhead.</p>
     </div>
   </div><!--/row-->
-  <div class="row">
-    <div class="span3">
-      <img class="small-bs-icon" src="assets/img/icon-html5.png">
-      <h3>HTML5</h3>
-      <p>Built to support new HTML5 elements and syntax.</p>
-    </div>
-    <div class="span3">
-      <img class="small-bs-icon" src="assets/img/icon-css3.png">
-      <h3>CSS3</h3>
-      <p>Progressively enhanced components for ultimate style.</p>
-    </div>
-    <div class="span3">
-      <img class="small-bs-icon" src="assets/img/icon-github.png">
-      <h3>Open-source</h3>
-      <p>Built for and maintained by the community via <a href="https://github.com">GitHub</a>.</p>
-    </div>
-    <div class="span3">
-      <img class="small-bs-icon" src="assets/img/icon-twitter.png">
-      <h3>Made at Twitter</h3>
-      <p>Brought to you by an experienced <a href="http://twitter.com/fat">engineer</a> and <a href="http://twitter.com/mdo">designer</a>.</p>
-    </div>
-  </div><!--/row-->
+  
 
   <hr class="soften">
 
-  <h1>Built with Bootstrap.</h1>
-  <p class="marketing-byline">For even more sites built with Bootstrap, <a href="http://builtwithbootstrap.tumblr.com/" target="_blank">visit the unofficial Tumblr</a> or <a href="./examples.html">browse the examples</a>.</p>
-  <ul class="thumbnails example-sites">
-    <li class="span3">
-      <a class="thumbnail" href="http://soundready.fm/" target="_blank">
-        <img src="assets/img/example-sites/soundready.png" alt="SoundReady.fm">
-      </a>
-    </li>
-    <li class="span3">
-      <a class="thumbnail" href="http://kippt.com/" target="_blank">
-        <img src="assets/img/example-sites/kippt.png" alt="Kippt">
-      </a>
-    </li>
-    <li class="span3">
-      <a class="thumbnail" href="http://www.fleetio.com/" target="_blank">
-        <img src="assets/img/example-sites/fleetio.png" alt="Fleetio">
-      </a>
-    </li>
-    <li class="span3">
-      <a class="thumbnail" href="http://www.jshint.com/" target="_blank">
-        <img src="assets/img/example-sites/jshint.png" alt="JS Hint">
-      </a>
-    </li>
-  </ul>
+  <div class="row">
+    <div class="span12">
+<div id="header">Latest news</div>
+
+        <div id="container">
+
+          <div id="roll0" style="display: none; top: 0px"></div>
+
+          <div id="roll1" style="display: none; top: 0px"></div>
+
+        </div>
+
+</div>
+
+  </div>
 
 </div><!-- /.marketing -->
 
